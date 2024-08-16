@@ -67,9 +67,11 @@ GET -> http://localhost:3000/barcode?text=1234567890&bctype=code128
 
 Key Points
 
-    bwip-js: A library for generating barcodes in Node.js.
-    Barcode Types: Common types include code128, ean13, qr, etc.
-    Scaling and Height: Adjust scale and height to fit your needs.
+- bwip-js: A library for generating barcodes in Node.js.
+  
+- Barcode Types: Common types include code128, ean13, qr, etc.
+
+- Scaling and Height: Adjust scale and height to fit your needs.
 
 This basic setup should get you started with a barcode API using Node.js. You can extend it with additional features like authentication, error handling, or different barcode formats.
 
