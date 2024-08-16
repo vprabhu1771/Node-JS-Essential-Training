@@ -1,0 +1,5 @@
+nvm list
+
+nvm use 20.10.0
+
+nvm install 

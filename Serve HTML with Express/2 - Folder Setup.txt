@@ -1,0 +1,10 @@
+Folder Setup
+
+project_folder -> views
+
+
+File Setup
+
+project_folder -> views -> index.html
+
+project_folder -> views -> about.html

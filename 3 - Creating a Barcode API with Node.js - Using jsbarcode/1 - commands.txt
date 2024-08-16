@@ -1,0 +1,13 @@
+To install the necessary dependencies for your Express server that generates barcodes, you can use the following command:
+
+
+npm i express 
+npm i canvas 
+npm i jsbarcode
+
+
+Here's a brief description of each package:
+
+- `express`: The web framework for handling HTTP requests and responses.
+- `canvas`: A library for creating and manipulating canvas elements.
+- `jsbarcode`: A library for generating barcodes.

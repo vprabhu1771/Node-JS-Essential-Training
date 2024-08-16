@@ -1,0 +1,58 @@
+To start a simple server using Node.js and environment variables, you can follow these steps:
+
+1. Create a new directory for your project:
+   
+   mkdir my-node-server
+   cd my-node-server
+   
+
+2. Initialize a new Node.js project:
+   
+   npm init -y
+   
+
+3. Install the `dotenv` package to manage environment variables:
+   
+   npm install dotenv
+   
+
+4. Create a `.env` file in the root directory of your project to define environment variables:
+   
+   PORT=3000
+   
+
+5. Create a file named `server.js` with the following content:
+
+   require('dotenv').config();
+   const http = require('http');
+
+   const PORT = process.env.PORT || 3000;
+
+   const requestHandler = (req, res) => {
+       res.end('Hello, world!');
+   };
+
+   const server = http.createServer(requestHandler);
+
+   server.listen(PORT, () => {
+       console.log(`Server is listening on port ${PORT}`);
+   });
+   
+
+6. Add a start script to your `package.json` file:
+
+   "scripts": {
+     "start": "node server.js"
+   }
+   
+
+7. Start your server:
+   
+   npm start
+   
+
+Your server will now be running on the port specified in your `.env` file, or on port 3000 if the `PORT` variable is not defined.
+
+OUTPUT
+
+Server is listening on port 3000

@@ -1,0 +1,26 @@
+// Load environment variables from .env file
+require('dotenv').config();
+
+const express = require('express');
+const path = require('path');
+const app = express();
+
+// Use environment variable for the port or default to 3000
+const port = process.env.PORT || 3000;
+
+// Serve static files from the "public" directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Define routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'index.html'));
+});
+
+app.get('/about', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'about.html'));
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});
