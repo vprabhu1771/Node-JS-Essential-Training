@@ -1,0 +1,3 @@
+under project_name -> create file
+
+File Name: .env

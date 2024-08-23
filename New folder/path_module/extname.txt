@@ -1,0 +1,11 @@
+const path = require('path');
+
+const ext = path.extname('./src/app.js');
+
+if(ext == '.js')
+{
+    console.log("javascript file found");
+}
+else{
+    console.log('file not found');
+}

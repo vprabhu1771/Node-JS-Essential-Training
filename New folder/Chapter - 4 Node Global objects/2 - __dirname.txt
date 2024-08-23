@@ -1,0 +1,29 @@
+The directory name of the current module. 
+
+index.js
+
+console.log(__dirname);
+
+// Prints: C:\Users\apptech\Desktop\learn-node
+
+
+
+
+or  This is the same as the path.dirname() of the __filename.
+
+index.js
+
+const path = require("path")
+
+console.log(path.dirname(__filename));
+
+
+// Prints: C:\Users\apptech\Desktop\learn-node
+
+
+
+
+In Terminal
+
+node index.js 
+

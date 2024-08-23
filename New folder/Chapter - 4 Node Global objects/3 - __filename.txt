@@ -1,0 +1,12 @@
+The file name of the current module. This is the current module file's absolute path with symlinks resolved.
+
+index.js
+
+console.log(__filename);
+
+// Prints: C:\Users\apptech\Desktop\learn-node\index.js
+
+
+In Terminal
+
+node index.js

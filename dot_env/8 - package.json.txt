@@ -1,0 +1,3 @@
+"scripts": {
+    "dev" : "node src/index.js"
+},

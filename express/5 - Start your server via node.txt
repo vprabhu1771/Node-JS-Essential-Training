@@ -1,0 +1,3 @@
+Start your server 
+
+node ./src/app.js

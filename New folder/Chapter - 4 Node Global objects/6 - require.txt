@@ -1,0 +1,39 @@
+Node.js follows the CommonJS module system, and the builtin require function is the easiest way to include modules that exist in separate files. 
+The basic functionality of require is that it reads a JavaScript file, executes the file, and then proceeds to return the exports object. 
+An example module:
+
+
+Create a folder for your project and initialize it as Node project, npm init -y
+
+Create the javascript file, example.js
+
+console.log("evaluating example.js");
+
+var invisible = function () {
+  console.log("invisible");
+}
+
+exports.message = "hi";
+
+exports.invisible = invisible;
+
+exports.say = function () {
+  console.log(exports.message);
+}
+
+
+Create the server file, app.js
+
+var example = require('./example.js');
+
+console.log(example);
+
+
+node app.js
+
+evaluating example.js
+{
+  message: 'hi',
+  say: [Function (anonymous)],
+  invisible: [Function: invisible]
+}

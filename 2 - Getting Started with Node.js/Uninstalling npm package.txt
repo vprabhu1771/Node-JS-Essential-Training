@@ -1,0 +1,22 @@
+To uninstall a package you have previously installed locally (using npm install <package-name> in the node_modules folder, run npm uninstall <package-name>
+
+npm uninstall bootstrap
+
+removed 2 packages, and audited 1 package in 335ms
+
+found 0 vulnerabilities
+
+
+from the project root folder (the folder that contains the node_modules folder).
+
+Using the -S flag, or --save, this operation will also remove the reference in the package.json file.
+
+
+package.json will be automatically updated with devDependency and dependency once you uninstall npm package.
+
+If the package is installed globally, you need to add the -g / --global flag:
+
+npm uninstall -g <package-name>
+
+and you can run this command from anywhere you want on your system because the folder where you currently are does not matter.
+

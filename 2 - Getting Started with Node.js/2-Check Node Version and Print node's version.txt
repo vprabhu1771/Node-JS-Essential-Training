@@ -1,0 +1,5 @@
+Check Node Version and Print node's version.
+
+node -v
+
+v16.6.0

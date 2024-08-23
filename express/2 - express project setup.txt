@@ -1,0 +1,26 @@
+Create a folder for your project and initialize it as Node project, 
+
+npm init -y
+
+install express to configure a lightweight Node server.
+
+npm i express
+
+
+create folder at project root for node source code 
+
+folder name is src
+
+Create the server file, under src/app.js
+
+
+create folder at project root for public facing side
+
+folder name is public
+
+Create the html file, under public/index.html
+
+
+
+
+

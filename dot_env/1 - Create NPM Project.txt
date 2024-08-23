@@ -1,0 +1,6 @@
+under project_name -> 
+
+In Terminal
+
+npm init --y
+

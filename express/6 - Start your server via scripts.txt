@@ -1,0 +1,12 @@
+Defines a set of node scripts you can run
+
+"scripts": {
+    "dev" : "node src/app.js",
+},
+
+or
+
+"scripts": {
+    "dev" : "node src/app.js",
+    "build" : "npm run dev",
+  },

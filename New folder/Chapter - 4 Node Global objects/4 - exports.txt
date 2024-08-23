@@ -1,0 +1,3 @@
+The exports variable is available within a module's file-level scope, and is assigned the value of module.
+
+exports before the module is evaluated.

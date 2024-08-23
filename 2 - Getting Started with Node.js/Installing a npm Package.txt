@@ -1,0 +1,50 @@
+Open your favorite browser
+
+Go To google
+
+type npm and hit Google Search
+
+right click open new tab
+https://www.npmjs.com/
+
+Search Package 
+
+Bootstrap
+
+right click open new tab
+https://www.npmjs.com/package/bootstrap
+
+Under Readme Tab
+
+Under Install Section
+
+npm i bootstrap
+
+added 2 packages, and audited 3 packages in 21s
+
+2 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+
+now you can see node_modules folder
+
+inside node_modules folder you can find bootstrap, @popperjs folder
+
+package.json
+
+{
+  "name": "node_project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^5.1.0"
+  }
+}

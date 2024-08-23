@@ -1,0 +1,11 @@
+Dotenv is a zero-dependency module that loads environment variables from a .env file into process.env. 
+
+
+Storing configuration in the environment separate from code is based on The Twelve-Factor App methodology.
+
+dotenv
+https://www.npmjs.com/package/dotenv
+
+In Terminal 
+
+npm install dotenv
