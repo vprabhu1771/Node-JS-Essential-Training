@@ -4,9 +4,17 @@
 
 To install the necessary dependencies for your Express server that generates barcodes, you can use the following command:
 
+```
 npm i dotenv
+```
+
+```
 npm i express 
+```
+
+```
 npm i nodemailer 
+``
 
 2. **Folder Setup**
 
