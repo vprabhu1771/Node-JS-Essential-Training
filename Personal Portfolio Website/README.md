@@ -14,7 +14,7 @@ npm i express
 
 ```
 npm i nodemailer 
-``
+```
 
 2. **Folder Setup**
 
