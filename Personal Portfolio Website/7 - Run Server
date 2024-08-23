@@ -1,0 +1,17 @@
+### Running the Project
+
+1. **Start the Server**:
+   Run the following command in your terminal:
+
+   ```bash
+   node app.js
+   ```
+
+2. **Access the Website**:
+   Open your browser and go to `http://localhost:3000` to see your portfolio website.
+
+### Notes:
+
+- **Email Configuration**: Replace `EMAIL_USER` and `EMAIL_PASS` in the `.env` file with your email credentials. Ensure that your email provider allows less secure apps or uses application-specific passwords if needed.
+- **Security**: For production use, never store sensitive information in your source code. Use environment variables securely.
+- **Extensions**: Add more sections to your portfolio (e.g., About, Projects, Skills) to expand it. You can also integrate a database to store messages instead of sending them via email.

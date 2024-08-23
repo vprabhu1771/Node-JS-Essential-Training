@@ -1,0 +1,20 @@
+Folder Setup
+
+under project_name -> public
+
+under project_name -> public -> css
+
+under project_name -> public -> images
+
+under project_name -> views
+
+
+File Setup
+
+under project_name -> .env
+
+under project_name -> views -> index.ejs
+
+under project_name -> public -> css -> styles.css
+
+under project_name -> app.js
