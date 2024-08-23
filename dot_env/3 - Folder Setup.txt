@@ -1,0 +1,10 @@
+Folder Setup
+
+under project_name -> src
+
+
+File Setup
+
+under project_name -> .env
+
+under project_name -> src -> index.js

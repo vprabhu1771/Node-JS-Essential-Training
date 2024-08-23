@@ -1,3 +1,0 @@
-under project_name -> src -> create file
-
-File Name: index.js
