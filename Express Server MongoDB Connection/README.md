@@ -36,8 +36,8 @@ my-express-app/
 Create a file named `.env` in the root directory to store your environment variables. This file will contain your MongoDB connection string:
 
 ```
-MONGO_URI=mongodb://localhost:27017/my_database
-HOST=0.0.0.0
+HOST=192.168.1.122
+MONGO_URI=mongodb://localhost:27017/my_databases
 ```
 
 ### Step 3: Create the `models/Category.js` File
@@ -110,6 +110,7 @@ app.post('/api/categories', async (req, res) => {
     await category.save();
     res.status(201).json({ data: category });
   } catch (error) {
+    console.log(req.body.name);
     res.status(500).json({ error: 'Failed to create category' });
   }
 });
