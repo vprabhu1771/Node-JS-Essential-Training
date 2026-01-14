@@ -1,3 +1,8 @@
+# Node.js Has a Built-In SQLite Module Now! ⚡ 
+```
+https://www.youtube.com/shorts/scrB5xqhhlU
+```
+
 ```js
 import { DatabaseSync } from 'node:sqlite';
 
