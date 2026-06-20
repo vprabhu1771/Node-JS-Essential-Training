@@ -72,3 +72,26 @@ app.listen(port, () => {
   console.log(`Server running at http://${host}:${port}`);
 });
 ```
+
+# 5 - postman
+```
+GET -> http://localhost:3000/api/categories
+
+
+Response
+
+[
+  {
+    "id": 1,
+    "name": "Electronics"
+  },
+  {
+    "id": 2,
+    "name": "Books"
+  },
+  {
+    "id": 3,
+    "name": "Clothing"
+  }
+]
+```
