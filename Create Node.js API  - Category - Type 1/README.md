@@ -6,10 +6,15 @@ cd node_hello
 
 npm init --y
 ```
+
+```
 npm i express
+```
+
 ```
 npm i nodemon
 ```
+
 ```
 npm i dotenv
 ```
