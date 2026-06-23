@@ -101,3 +101,111 @@ fetch('/api/ip')
 ```
 
 This will generate a QR code that mobile devices on the same Wi-Fi network can scan to open your Node.js application.
+
+
+###
+
+Your current code returns the **first non-internal IPv4 address**, which is picking up:
+
+```text
+vEthernet (Default Switch) -> 172.27.32.1
+```
+
+Instead, filter out Hyper-V virtual adapters (`vEthernet`) and prefer the actual Ethernet/Wi-Fi adapter.
+
+```javascript
+const os = require('os');
+
+function getLocalIP() {
+    const interfaces = os.networkInterfaces();
+
+    for (const name of Object.keys(interfaces)) {
+
+        // Skip virtual adapters
+        if (
+            name.includes('vEthernet') ||
+            name.includes('Virtual') ||
+            name.includes('VMware') ||
+            name.includes('Hyper-V')
+        ) {
+            continue;
+        }
+
+        for (const iface of interfaces[name]) {
+            if (
+                iface.family === 'IPv4' &&
+                !iface.internal
+            ) {
+                return iface.address;
+            }
+        }
+    }
+
+    return 'IP Not Found';
+}
+
+console.log(getLocalIP());
+```
+
+Output:
+
+```text
+192.168.1.211
+```
+
+### More reliable Windows solution
+
+If you specifically want the adapter named `Ethernet`:
+
+```javascript
+const os = require('os');
+
+function getEthernetIP() {
+    const interfaces = os.networkInterfaces();
+
+    if (interfaces['Ethernet']) {
+        const ethernet = interfaces['Ethernet'];
+
+        for (const iface of ethernet) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+
+    return 'Not Found';
+}
+
+console.log(getEthernetIP());
+```
+
+### Debug all adapters
+
+Run this once to see the exact adapter names Node.js sees:
+
+```javascript
+const os = require('os');
+
+console.log(os.networkInterfaces());
+```
+
+This will show something like:
+
+```text
+{
+  Ethernet: [
+    {
+      address: '192.168.1.211',
+      family: 'IPv4'
+    }
+  ],
+  'vEthernet (Default Switch)': [
+    {
+      address: '172.27.32.1',
+      family: 'IPv4'
+    }
+  ]
+}
+```
+
+Then you can explicitly select `"Ethernet"` and display `192.168.1.211` in your HTML page.
