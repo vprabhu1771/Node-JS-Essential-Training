@@ -5,6 +5,10 @@ To display the server's local IP address in `index.html`, create an API endpoint
 PORT=3000
 ```
 
+```
+node server.js
+```
+
 ### server.js
 
 ```javascript
