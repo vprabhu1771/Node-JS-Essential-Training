@@ -5,6 +5,24 @@ https://www.npmjs.com/package/mysql2
 ```
 https://sidorares.github.io/node-mysql2/docs/examples
 ```
+
+Create a `.env` file in the root of your Node.js project:
+
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=root
+DB_NAME=small_shop
+
+# Server Configuration
+PORT=3000
+
+# Environment
+NODE_ENV=development
+```
+
 `config\database.js`
 
 ```
