@@ -103,7 +103,7 @@ fetch('/api/ip')
 This will generate a QR code that mobile devices on the same Wi-Fi network can scan to open your Node.js application.
 
 
-###
+### ---
 
 Your current code returns the **first non-internal IPv4 address**, which is picking up:
 
