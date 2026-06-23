@@ -1,5 +1,10 @@
 To display the server's local IP address in `index.html`, create an API endpoint in Express and fetch it from the browser.
 
+### `.env`
+```env
+PORT=3000
+```
+
 ### server.js
 
 ```javascript
