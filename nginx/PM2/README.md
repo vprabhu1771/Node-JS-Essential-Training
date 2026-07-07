@@ -1,3 +1,12 @@
+## Step 8: Monitor Fix
+```bash
+# Monitor in real-time
+pm2 monit
+
+# Check if restarts stop
+pm2 status  # ↺ should stop increasing
+```
+
 # Check PM2 status
 ```
 pm2 status
