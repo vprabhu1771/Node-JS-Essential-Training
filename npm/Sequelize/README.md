@@ -1,7 +1,7 @@
 ```
 https://sequelize.org/
 ```
-- Install dependencies
+# Install dependencies
 ```
 npm install sequelize sqlite3
 # or
