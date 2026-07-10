@@ -58,4 +58,10 @@ const nearbyLocations = await Location.findAll({
 });
 ```
 
-For full reference on all spatial formats and spatial reference systems (SRID), consult the official Sequelize GEOMETRY Docs[https://sequelize.org/api/v6/class/src/data-types.js~geometry] and Sequelize GEOGRAPHY Docs[https://sequelize.org/api/v6/class/src/data-types.js~geography].
+For full reference on all spatial formats and spatial reference systems (SRID).
+
+## 📚 References
+
+* [Sequelize GEOMETRY Documentation](https://sequelize.org/api/v6/class/src/data-types.js~geometry)
+* [Sequelize GEOGRAPHY Documentation](https://sequelize.org/api/v6/class/src/data-types.js~geography)
+
