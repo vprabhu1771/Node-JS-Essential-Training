@@ -296,6 +296,99 @@ const startServer = async () => {
 startServer();
 ```
 
+# OR
+### 7. Server (server.js)
+```javascript
+import express from 'express';
+import http from 'http';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+import sequelize from './config/database.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+
+
+const app = express();
+const server = http.createServer(app);
+
+// Start server
+const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0';
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api', categoryRoutes);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
+
+app.get('/developer', async (req, res) => {
+    res.status(200).json({      
+      message: 'Developer Check OK'
+    });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'Route not found' });
+});
+
+
+server.listen(PORT, HOST, () => {
+
+  console.log('╔═══════════════════════════════════════════════╗');
+  console.log('║   Backend Server          ║');
+  console.log('╠═══════════════════════════════════════════════╣');
+  console.log(`║   Server running on: http://${HOST}:${PORT}   ║`);
+  console.log(`║   Environment: ${process.env.NODE_ENV || 'development'}                    ║`);
+  console.log('║   Socket.io: Enabled                          ║');
+  console.log('╚═══════════════════════════════════════════════╝');
+  console.log('\nMake sure to configure this IP in mobile apps');
+  console.log(`API Base URL: http://${HOST}:${PORT}/api/v1`);
+  console.log(`Socket URL: http://${HOST}:${PORT}\n`);
+
+  startServer();
+
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  backupScheduler.stop();
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+// Sync database and start server
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection established successfully.');
+    
+    await sequelize.sync({ alter: true });
+    console.log('Database synchronized.');
+    
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Unable to start server:', error);
+    process.exit(1);
+  }
+};
+```
+
 ### 8. .env file
 ```env
 PORT=5000
