@@ -160,7 +160,328 @@ const sequelize = new Sequelize(
 module.exports = sequelize;
 ```
 
-## 5. Main Server with Caching
+## 5. Middleware
+**middleware\cacheMiddleware.js**
+```javascript
+const redisClient = require('../config/redis');
+
+// Cache middleware
+const cacheMiddleware = (keyPrefix) => {
+  return async (req, res, next) => {
+    try {
+      // Build cache key based on URL and query params for pagination/search
+      let cacheKey = `${keyPrefix}`;
+      
+      if (req.params.id) {
+        cacheKey += `:${req.params.id}`;
+      } else {
+        // Handle pagination and search queries
+        const queryParams = new URLSearchParams(req.query);
+        if (queryParams.toString()) {
+          cacheKey += `:${queryParams.toString()}`;
+        } else {
+          cacheKey += ':all';
+        }
+      }
+      
+      // Check if data exists in Redis
+      const cachedData = await redisClient.get(cacheKey);
+      
+      if (cachedData) {
+        console.log(`✅ Cache HIT - ${cacheKey}`);
+        const data = JSON.parse(cachedData);
+        return res.json({
+          source: 'cache',
+          data: data
+        });
+      }
+      
+      console.log(`❌ Cache MISS - ${cacheKey}`);
+      
+      // Store the original send function
+      const originalSend = res.json.bind(res);
+      
+      // Override the send function to cache the response
+      res.json = function(body) {
+        // Cache the response data (excluding the source flag)
+        const dataToCache = body.data || body;
+        redisClient.setEx(cacheKey, 3600, JSON.stringify(dataToCache))
+          .then(() => {
+            console.log(`💾 Cache stored - ${cacheKey}`);
+          })
+          .catch(err => {
+            console.error('Error caching data:', err);
+          });
+        
+        return originalSend(body);
+      };
+      
+      next();
+    } catch (error) {
+      console.error('Cache middleware error:', error);
+      next(); // Continue even if cache fails
+    }
+  };
+};
+
+// Helper function to invalidate cache patterns
+const invalidateCache = async (patterns) => {
+  try {
+    const keys = await redisClient.keys(patterns);
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+      console.log(`🔄 Cache invalidated - ${keys.length} keys deleted`);
+      return keys.length;
+    }
+    return 0;
+  } catch (error) {
+    console.error('Error invalidating cache:', error);
+    return 0;
+  }
+};
+
+module.exports = {
+  cacheMiddleware,
+  invalidateCache
+};
+```
+
+
+## 6. Category Route CRUD Logic
+
+**routes\category.js**
+```javascript
+const express = require('express');
+const router = express.Router();
+const { Op } = require('sequelize');
+const { cacheMiddleware, invalidateCache } = require('../middleware/cacheMiddleware');
+const redisClient = require('../config/redis');
+const Category = require('../models/Category'); // Assuming you have this
+
+// GET all categories with caching
+router.get('/categories', cacheMiddleware('categories'), async (req, res) => {
+  try {
+    const categories = await Category.findAll({
+      attributes: ['id', 'name', 'created_at', 'updated_at'],
+      order: [['created_at', 'DESC']],
+      raw: true
+    });
+    
+    res.json({
+      source: 'database',
+      data: categories
+    });
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET single category by ID with caching
+router.get('/categories/:id', cacheMiddleware('category'), async (req, res) => {
+  try {
+    const category = await Category.findByPk(req.params.id, {
+      attributes: ['id', 'name', 'created_at', 'updated_at'],
+      raw: true
+    });
+    
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    
+    res.json({
+      source: 'database',
+      data: category
+    });
+  } catch (error) {
+    console.error('Error fetching category:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET categories with pagination
+router.get('/categories/paginated', cacheMiddleware('categories_paginated'), async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+    
+    const { count, rows } = await Category.findAndCountAll({
+      attributes: ['id', 'name', 'created_at', 'updated_at'],
+      order: [['created_at', 'DESC']],
+      limit: limit,
+      offset: offset,
+      raw: true
+    });
+    
+    res.json({
+      source: 'database',
+      data: {
+        categories: rows,
+        pagination: {
+          total: count,
+          page: page,
+          limit: limit,
+          totalPages: Math.ceil(count / limit)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching paginated categories:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// CREATE new category
+router.post('/categories', async (req, res) => {
+  try {
+    const { name } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+    
+    const now = new Date();
+    const category = await Category.create({
+      name,
+      created_at: now,
+      updated_at: now
+    });
+    
+    // Invalidate all category caches
+    await invalidateCache('categories*');
+    await invalidateCache('categories_paginated*');
+    await invalidateCache('category:*');
+    
+    res.status(201).json({
+      message: 'Category created successfully',
+      data: category
+    });
+  } catch (error) {
+    console.error('Error creating category:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// BULK CREATE categories
+router.post('/categories/bulk', async (req, res) => {
+  try {
+    const { names } = req.body;
+    
+    if (!names || !Array.isArray(names) || names.length === 0) {
+      return res.status(400).json({ error: 'Names array is required' });
+    }
+    
+    const categories = names.map(name => ({
+      name,
+      created_at: new Date(),
+      updated_at: new Date()
+    }));
+    
+    const created = await Category.bulkCreate(categories);
+    
+    // Invalidate all category caches
+    await invalidateCache('categories*');
+    await invalidateCache('categories_paginated*');
+    await invalidateCache('category:*');
+    
+    res.status(201).json({
+      message: `${created.length} categories created successfully`,
+      data: created
+    });
+  } catch (error) {
+    console.error('Error bulk creating categories:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// UPDATE category
+router.put('/categories/:id', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const category = await Category.findByPk(req.params.id);
+    
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    
+    category.name = name || category.name;
+    category.updated_at = new Date();
+    await category.save();
+    
+    // Invalidate all category caches
+    await invalidateCache('categories*');
+    await invalidateCache('categories_paginated*');
+    await invalidateCache('category:*');
+    
+    res.json({
+      message: 'Category updated successfully',
+      data: category
+    });
+  } catch (error) {
+    console.error('Error updating category:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE category
+router.delete('/categories/:id', async (req, res) => {
+  try {
+    const category = await Category.findByPk(req.params.id);
+    
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    
+    await category.destroy();
+    
+    // Invalidate all category caches
+    await invalidateCache('categories*');
+    await invalidateCache('categories_paginated*');
+    await invalidateCache('category:*');
+    
+    res.json({ message: 'Category deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// SEARCH categories
+router.get('/categories/search', cacheMiddleware('categories_search'), async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+    
+    const categories = await Category.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${q}%`
+        }
+      },
+      attributes: ['id', 'name', 'created_at', 'updated_at'],
+      order: [['name', 'ASC']],
+      limit: 20,
+      raw: true
+    });
+    
+    res.json({
+      source: 'database',
+      data: categories
+    });
+  } catch (error) {
+    console.error('Error searching categories:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = router;
+```
+
+## 7. Main Server with Caching
 
 **server.js**
 ```javascript
