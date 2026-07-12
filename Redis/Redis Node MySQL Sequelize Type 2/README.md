@@ -3,7 +3,7 @@ Here's the complete example using **MySQL** instead of PostgreSQL with Node.js, 
 ## 1. Install Dependencies
 
 ```bash
-npm install express sequelize mysql2 redis
+npm install express sequelize mysql2 redis dotenv
 npm install --save-dev nodemon
 ```
 
@@ -30,6 +30,67 @@ redisClient.on('connect', () => {
 redisClient.connect();
 
 module.exports = redisClient;
+```
+
+# OR
+
+**config/redis.js**
+```javascript
+const redis = require('redis');
+
+// Create Redis client for v3.x (compatible with Redis 5 and below)
+const redisClient = redis.createClient({
+  host: 'localhost',
+  port: 6379,
+  // No password (since your Redis has no password)
+  retry_strategy: function(options) {
+    if (options.error && options.error.code === 'ECONNREFUSED') {
+      console.warn('⚠️ Redis connection refused. Retrying...');
+      return Math.min(options.attempt * 100, 3000);
+    }
+    
+    if (options.total_retry_time > 1000 * 60 * 5) {
+      console.warn('⚠️ Redis retry time exhausted');
+      return undefined;
+    }
+    
+    return Math.min(options.attempt * 100, 3000);
+  }
+});
+
+// Event handlers
+redisClient.on('connect', () => {
+  console.log('✅ Connected to Redis');
+});
+
+redisClient.on('ready', () => {
+  console.log('✅ Redis is ready');
+});
+
+redisClient.on('error', (err) => {
+  console.error('Redis Client Error:', err.message);
+});
+
+redisClient.on('end', () => {
+  console.log('⚠️ Redis connection ended');
+});
+
+// Promisify methods for async/await
+const { promisify } = require('util');
+const getAsync = promisify(redisClient.get).bind(redisClient);
+const setexAsync = promisify(redisClient.setex).bind(redisClient);
+const delAsync = promisify(redisClient.del).bind(redisClient);
+
+// Check if Redis is connected
+const isReady = () => redisClient.connected;
+
+module.exports = {
+  client: redisClient,
+  get: getAsync,
+  setEx: setexAsync,
+  del: delAsync,
+  isReady
+};
 ```
 
 ## 3. Setup Sequelize Model for MySQL
@@ -73,11 +134,16 @@ module.exports = Category;
 **config/database.js**
 ```javascript
 const { Sequelize } = require('sequelize');
+require('dotenv').config()
 
-const sequelize = new Sequelize('your_database', 'your_username', 'your_password', {
-  host: 'localhost',
+const sequelize = new Sequelize(
+  process.env.DB_NAME || 'computer_shop', 
+  process.env.DB_USER || 'root', 
+  process.env.DB_PASSWORD || 'root', 
+  {
+  host: process.env.DB_HOST || 'localhost',
   dialect: 'mysql',
-  port: 3306, // Default MySQL port
+  port: process.env.DB_PORT || 3306, // Default MySQL port
   logging: console.log, // Set to false to disable logging
   pool: {
     max: 5,
@@ -101,276 +167,18 @@ module.exports = sequelize;
 const express = require('express');
 const sequelize = require('./config/database');
 const Category = require('./models/Category');
-const redisClient = require('./config/redis');
+
 
 const app = express();
 app.use(express.json());
 
-// Cache middleware
-const cacheMiddleware = (keyPrefix) => {
-  return async (req, res, next) => {
-    try {
-      const cacheKey = `${keyPrefix}:${req.params.id || 'all'}`;
-      
-      // Check if data exists in Redis
-      const cachedData = await redisClient.get(cacheKey);
-      
-      if (cachedData) {
-        console.log('✅ Cache HIT - Returning cached data');
-        const data = JSON.parse(cachedData);
-        return res.json({
-          source: 'cache',
-          data: data
-        });
-      }
-      
-      console.log('❌ Cache MISS - Fetching from database');
-      
-      // Store the original send function
-      const originalSend = res.json.bind(res);
-      
-      // Override the send function to cache the response
-      res.json = function(body) {
-        // Cache the response data (excluding the source flag)
-        const dataToCache = body.data || body;
-        redisClient.setEx(cacheKey, 3600, JSON.stringify(dataToCache)); // Expires in 1 hour
-        
-        return originalSend(body);
-      };
-      
-      next();
-    } catch (error) {
-      console.error('Cache middleware error:', error);
-      next(); // Continue even if cache fails
-    }
-  };
-};
 
-// GET all categories with caching
-app.get('/api/categories', cacheMiddleware('categories'), async (req, res) => {
-  try {
-    const categories = await Category.findAll({
-      attributes: ['id', 'name', 'created_at', 'updated_at'],
-      order: [['created_at', 'DESC']],
-      raw: true // Returns plain objects instead of Model instances
-    });
-    
-    res.json({
-      source: 'database',
-      data: categories
-    });
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// API Routes
+// Use a simpler base path - just '/api'
+app.use('/api', require('./routes/category'));
 
-// GET single category by ID with caching
-app.get('/api/categories/:id', cacheMiddleware('category'), async (req, res) => {
-  try {
-    const category = await Category.findByPk(req.params.id, {
-      attributes: ['id', 'name', 'created_at', 'updated_at'],
-      raw: true
-    });
-    
-    if (!category) {
-      return res.status(404).json({ error: 'Category not found' });
-    }
-    
-    res.json({
-      source: 'database',
-      data: category
-    });
-  } catch (error) {
-    console.error('Error fetching category:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// GET categories with pagination (MySQL specific)
-app.get('/api/categories/paginated', cacheMiddleware('categories_paginated'), async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
-    
-    const { count, rows } = await Category.findAndCountAll({
-      attributes: ['id', 'name', 'created_at', 'updated_at'],
-      order: [['created_at', 'DESC']],
-      limit: limit,
-      offset: offset,
-      raw: true
-    });
-    
-    res.json({
-      source: 'database',
-      data: {
-        categories: rows,
-        pagination: {
-          total: count,
-          page: page,
-          limit: limit,
-          totalPages: Math.ceil(count / limit)
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching paginated categories:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// CREATE new category (invalidates cache)
-app.post('/api/categories', async (req, res) => {
-  try {
-    const { name } = req.body;
-    
-    if (!name) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
-    
-    const now = new Date();
-    const category = await Category.create({
-      name,
-      created_at: now,
-      updated_at: now
-    });
-    
-    // Invalidate caches
-    await redisClient.del('categories:all');
-    await redisClient.del('categories_paginated:all');
-    console.log('🔄 Cache invalidated for categories');
-    
-    res.status(201).json({
-      message: 'Category created successfully',
-      data: category
-    });
-  } catch (error) {
-    console.error('Error creating category:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// BULK CREATE categories (MySQL specific)
-app.post('/api/categories/bulk', async (req, res) => {
-  try {
-    const { names } = req.body;
-    
-    if (!names || !Array.isArray(names) || names.length === 0) {
-      return res.status(400).json({ error: 'Names array is required' });
-    }
-    
-    const categories = names.map(name => ({
-      name,
-      created_at: new Date(),
-      updated_at: new Date()
-    }));
-    
-    const created = await Category.bulkCreate(categories, {
-      returning: true
-    });
-    
-    // Invalidate caches
-    await redisClient.del('categories:all');
-    await redisClient.del('categories_paginated:all');
-    console.log('🔄 Cache invalidated - bulk insert');
-    
-    res.status(201).json({
-      message: `${created.length} categories created successfully`,
-      data: created
-    });
-  } catch (error) {
-    console.error('Error bulk creating categories:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// UPDATE category (invalidates specific cache)
-app.put('/api/categories/:id', async (req, res) => {
-  try {
-    const { name } = req.body;
-    const category = await Category.findByPk(req.params.id);
-    
-    if (!category) {
-      return res.status(404).json({ error: 'Category not found' });
-    }
-    
-    category.name = name || category.name;
-    category.updated_at = new Date();
-    await category.save();
-    
-    // Invalidate caches
-    await redisClient.del('categories:all');
-    await redisClient.del('categories_paginated:all');
-    await redisClient.del(`category:${category.id}`);
-    console.log(`🔄 Cache invalidated for category: ${category.id}`);
-    
-    res.json({
-      message: 'Category updated successfully',
-      data: category
-    });
-  } catch (error) {
-    console.error('Error updating category:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// DELETE category (invalidates cache)
-app.delete('/api/categories/:id', async (req, res) => {
-  try {
-    const category = await Category.findByPk(req.params.id);
-    
-    if (!category) {
-      return res.status(404).json({ error: 'Category not found' });
-    }
-    
-    await category.destroy();
-    
-    // Invalidate caches
-    await redisClient.del('categories:all');
-    await redisClient.del('categories_paginated:all');
-    await redisClient.del(`category:${category.id}`);
-    console.log(`🔄 Cache invalidated - category deleted: ${category.id}`);
-    
-    res.json({ message: 'Category deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting category:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// MySQL specific - SEARCH categories
-app.get('/api/categories/search', cacheMiddleware('categories_search'), async (req, res) => {
-  try {
-    const { q } = req.query;
-    
-    if (!q) {
-      return res.status(400).json({ error: 'Search query is required' });
-    }
-    
-    // MySQL LIKE query with wildcards
-    const { Op } = require('sequelize');
-    const categories = await Category.findAll({
-      where: {
-        name: {
-          [Op.like]: `%${q}%`
-        }
-      },
-      attributes: ['id', 'name', 'created_at', 'updated_at'],
-      order: [['name', 'ASC']],
-      limit: 20,
-      raw: true
-    });
-    
-    res.json({
-      source: 'database',
-      data: categories
-    });
-  } catch (error) {
-    console.error('Error searching categories:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// Or if you want to keep versioning
+app.use('/api/v1', require('./routes/category'));
 
 // Database connection and server start
 const PORT = process.env.PORT || 3000;
