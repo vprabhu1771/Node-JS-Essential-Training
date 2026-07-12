@@ -7,6 +7,24 @@ npm install express sequelize mysql2 redis dotenv
 npm install --save-dev nodemon
 ```
 
+## 2. Environment
+
+**.env**
+
+```env
+# Server Configuration
+PORT=5000
+HOST=0.0.0.0
+NODE_ENV=production
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=computer_shop
+DB_USER=root
+DB_PASSWORD=root
+```
+
 ## 2. Setup Redis Connection
 
 **config/redis.js**
