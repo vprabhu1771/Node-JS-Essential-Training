@@ -47,11 +47,13 @@ whatsappClient.on('qr', (qr) => {
     qrcode.generate(qr, { small: true });
 });
 
+var myNumber;
+
 whatsappClient.on('ready', () => {
     console.log('Client is ready!');
 
     // Get your own number
-    const myNumber = whatsappClient.info.wid.user; // Just the number without @c.us
+    myNumber = whatsappClient.info.wid.user; // Just the number without @c.us
     console.log('Your WhatsApp number:', myNumber);
     console.log('Full format for filtering:', `${myNumber}@c.us`);
     
@@ -59,7 +61,7 @@ whatsappClient.on('ready', () => {
     whatsappClient.sendMessage(`${myNumber}@c.us`, 'Bot is ready!');
 });
 
-const yourPhoneNumber = `${whatsappClient.info.wid.user}@c.us`; // Replace with your number in international format
+const yourPhoneNumber = `${myNumber}@c.us`; // Replace with your number in international format
 
 // Not Working
 whatsappClient.on('message', (msg) => {
@@ -74,6 +76,9 @@ whatsappClient.on('message', (msg) => {
 whatsappClient.on('message_create', (msg) => {
     if (msg.body === '!ping') {
         msg.reply('pong');
+    }
+    if (msg.body === 'call me') {
+        msg.reply('ok');
     }
 });
 
