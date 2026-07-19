@@ -59,27 +59,37 @@ whatsappClient.on('ready', () => {
     whatsappClient.sendMessage(`${myNumber}@c.us`, 'Bot is ready!');
 });
 
-const yourPhoneNumber = '919944177142@c.us'; // Replace with your number in international format
+const yourPhoneNumber = `${whatsappClient.info.wid.user}@c.us`; // Replace with your number in international format
 
-// whatsappClient.on('message', (msg) => {
-//     console.log(msg.body);
-//     if (msg.body == '!ping') {
-//         msg.reply('pong');
-//     }    
-// });
-
-// Filter to only respond to messages from yourself
+// Not Working
 whatsappClient.on('message', (msg) => {
-    const myNumber = whatsappClient.info.wid.user;
     
-    // Only respond if the message is from you
-    if (msg.author === `${myNumber}@c.us` || msg.from === `${myNumber}@c.us`) {
-        if (msg.body === '!ping') {
-            msg.reply('🏓 pong');
-        }
+    if (msg.body == '!ping') {
+        msg.reply('pong');
+    }    
+});
+
+// 2. Attach your message event
+//  This Working message_create
+whatsappClient.on('message_create', (msg) => {
+    if (msg.body === '!ping') {
+        msg.reply('pong');
     }
 });
 
+// Filter to only respond to messages from yourself
+// whatsappClient.on('message', (msg) => {
+//     const myNumber = whatsappClient.info.wid.user;
+    
+//     // Only respond if the message is from you
+//     if (msg.author === `${myNumber}@c.us` || msg.from === `${myNumber}@c.us`) {
+//         if (msg.body === '!ping') {
+//             msg.reply('🏓 pong');
+//         }
+//     }
+// });
+
+whatsappClient.initialize();
 module.exports = whatsappClient;
 ```
 
