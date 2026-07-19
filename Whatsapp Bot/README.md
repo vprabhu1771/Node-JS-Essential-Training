@@ -1,3 +1,8 @@
+##  Node.js Rest API to send and receive messagem from WhatsApp - PART 1 
+```
+https://www.youtube.com/watch?v=aNzSXS5AkBg
+```
+
 ```
 npm i express dotenv whatsapp-web.js qrcode-terminal
 ```
