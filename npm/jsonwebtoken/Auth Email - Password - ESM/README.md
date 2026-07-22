@@ -493,3 +493,112 @@ router.delete('/account', authenticateToken, async (req, res) => {
 
 export default router;
 ```
+
+`server.js`
+
+```javascript
+import express from 'express';
+import http from 'http';
+import cors from 'cors';
+import helmet from 'helmet';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+import sequelize from './config/database.js';
+// Import your models here if needed
+// Import User model - THIS IS CRUCIAL!
+import Category from './models/Category.js';
+import User from './models/User.js';
+
+
+import categoriesRoutes from './routes/categories.js';
+import authRoutes from './routes/auth.js';
+
+const app = express();
+const server = http.createServer(app);
+
+// Middleware
+app.use(helmet());
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+// app.use('/api', categoryRoutes);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
+
+app.get('/developer', async (req, res) => {
+  res.status(200).json({      
+    message: 'Developer Check OK'
+  });
+});
+
+// API Routes
+app.use('/api/v1/categories', categoriesRoutes);
+app.use('/api/v1/auth', authRoutes);
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'Route not found' });
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  // backupScheduler.stop(); // Uncomment if you have this
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+// Sync database and start server
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connection established successfully.');
+
+    // Show all registered models
+    console.log('📊 Registered models:', Object.keys(sequelize.models));
+    
+    // Sync with logging
+    await sequelize.sync({ 
+      alter: true,
+      logging: (sql) => console.log('🔍 SQL:', sql)
+    });
+    
+    await sequelize.sync({ alter: true });
+    console.log('✅ Database synchronized.');
+    
+    // Start the server
+    const PORT = process.env.PORT || 5000;
+    const HOST = process.env.HOST || '0.0.0.0';
+    
+    server.listen(PORT, HOST, () => {
+      console.log('╔═══════════════════════════════════════════════╗');
+      console.log('║   Backend Server                             ║');
+      console.log('╠═══════════════════════════════════════════════╣');
+      console.log(`║   Server running on: http://${HOST}:${PORT}   ║`);
+      console.log(`║   Environment: ${process.env.NODE_ENV || 'development'}                    ║`);
+      console.log('║   Socket.io: Enabled                          ║');
+      console.log('╚═══════════════════════════════════════════════╝');
+      console.log('\nMake sure to configure this IP in mobile apps');
+      console.log(`API Base URL: http://${HOST}:${PORT}/api/v1`);
+      console.log(`Socket URL: http://${HOST}:${PORT}\n`);
+    });
+    
+  } catch (error) {
+    console.error('❌ Unable to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Start the server
+startServer();
+```
